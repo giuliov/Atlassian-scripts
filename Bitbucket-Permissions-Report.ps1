@@ -6,7 +6,7 @@ param(
     [Parameter(Mandatory=$True)]
     [PSCredential] $credential,
     [Parameter(Mandatory=$False)]
-    $reportFile = "bitbucket-perms.csv",
+    $reportFolder = "reports",
     [Parameter(Mandatory=$True)]
     [string] $serverURL,
     [Parameter(Mandatory=$False)]
@@ -41,6 +41,7 @@ function restCall([string]$apiURL)
 
 
 
+$all_repositories = @()
 $all_user_perms = @() # flat
 
 $all_group_perms = @{} # keyed by group
@@ -76,6 +77,10 @@ function addGroups($groupList,[string]$level,[string]$key)
 }
 
 
+# make sure output dir is there
+New-Item -Path $reportFolder -ItemType Directory -Force
+
+
 $projects = restCall "${BASEURL}/projects/${NOLIMITS}"
 foreach ($project in $projects) {
 
@@ -91,6 +96,9 @@ foreach ($project in $projects) {
 
     $repos = restCall "${BASEURL}/projects/${PROJECTKEY}/repos/${NOLIMITS}"
     foreach ($repo in $repos) {
+
+        $all_repositories += $repo
+
         <# from https://developer.atlassian.com/static/javadoc/stash/3.11.1/api/reference/com/atlassian/stash/repository/Repository.State.html
             AVAILABLE  	Indicates the repository has been created both in the database and in the associated SCM and may be pulled from or pushed to normally. 
             INITIALISATION_FAILED  	Indicates the associated SCM was not able to create the repository's SCM-specific storage, such as a bare clone on disk in git. 
@@ -112,6 +120,13 @@ foreach ($project in $projects) {
     }#for
 
 }#for
+
+
+$reportFile = Join-Path $reportFolder -ChildPath "bitbucket-repositories.csv"
+$all_repositories | foreach{
+    New-Object -TypeName PSObject -Property @{ project=$_.project.key; project_long=$_.project.name; repo=$_.name }
+} | Export-Csv -Path $reportFile -Force -NoTypeInformation
+
 
 
 $_activity = "Processing groups"
@@ -143,6 +158,9 @@ $final_table = $all_user_perms | foreach {
 }
 
 Write-Progress -Activity $_activity -Completed
+
+
+$reportFile = Join-Path $reportFolder -ChildPath "bitbucket-permissions.csv"
 
 $final_table | where {
     $excludeUsers -notcontains $_.userName
