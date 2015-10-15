@@ -15,8 +15,6 @@ param(
     [bool] $cleanup = $False
 ) 
 
-# $VerbosePreference = "SilentlyContinue"
-
 ### define context ###
 $stash_user = $credential.UserName.Split('\')[1]
 $stash_plain_password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($credential.Password))
@@ -83,6 +81,8 @@ function addGroups($groupList,[string]$level,[string]$key)
 New-Item -Path $reportFolder -ItemType Directory -Force | Out-Null
 
 
+Write-Host "Getting projects' permissions"
+
 $projects = restCall "${BASEURL}/projects/${NOLIMITS}"
 foreach ($project in $projects) {
 
@@ -122,6 +122,9 @@ foreach ($project in $projects) {
     }#for
 
 }#for
+
+
+Write-Host "Post-processing"
 
 
 $reportFile = Join-Path $reportFolder -ChildPath "bitbucket-repositories.csv"
@@ -176,4 +179,5 @@ $final_table | where {
     Export-Csv -Path $reportFile -Force -NoTypeInformation
 
 
+Write-Host "Permission processing complete"
 #EOF#

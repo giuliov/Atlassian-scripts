@@ -18,7 +18,6 @@ param(
     [bool] $cleanup = $False
 )
 
-# $VerbosePreference = "SilentlyContinue"
 $pathToScripts = $PSScriptRoot
 
 
@@ -46,7 +45,7 @@ $workingFolder = Join-Path $env:TEMP -ChildPath "bitbucket-audit-report-$($refer
 New-Item -Path $workingFolder -ItemType Directory -Force | Out-Null
 
 # pull down the audit log files
-<#
+Write-Host "Downloading Audit logs"
 $ssh = New-SSHSession -ComputerName $bitbucketHost -Credential $credential
 $ls = (Invoke-SSHCommand -SSHSession $ssh -Command "ls -1 $bitbucketLogDirectory/atlassian-stash-audit-$($referenceDate.ToString("yyyy-MM"))-*.log.gz").Output
 $ls | foreach {
@@ -57,14 +56,17 @@ $ls | foreach {
 Remove-SSHSession -SSHSession $ssh
 
 # uncompress
+Write-Host "Decompressing Audit logs"
 Get-ChildItem $workingFolder -Filter "*.gz" | foreach {
     $audit_file = $_
     Write-Progress -Activity "Expanding downloaded files" -CurrentOperation "Expanding $($audit_file.Name)"
     Expand-GZip -FullName $audit_file.FullName #-NewName [IO.Path]::ChangeExtension($audit_file.FullName,$null)
 }
-#>
+
 
 # parse and filter the logs
+Write-Host "Parsing and filtering Audit logs"
+
 Get-ChildItem $workingFolder -Filter "*.log" | foreach {
     $audit_file = $_
     Write-Progress -Activity "Processing audit log files" -CurrentOperation "Processing $($audit_file.Name)"
@@ -80,4 +82,5 @@ if ($cleanup) {
     Remove-Item $workingFolder -Recurse -Force
 }
 
+Write-Host "Audit processing complete"
 #EOF#
