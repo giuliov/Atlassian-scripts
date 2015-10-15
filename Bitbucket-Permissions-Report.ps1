@@ -10,7 +10,9 @@ param(
     [Parameter(Mandatory=$True)]
     [string] $serverURL,
     [Parameter(Mandatory=$False)]
-    $excludeUsers = @("admin")
+    $excludeUsers = @("admin"),
+    [Parameter(Mandatory=$False)]
+    [bool] $cleanup = $False
 ) 
 
 # $VerbosePreference = "SilentlyContinue"
@@ -78,7 +80,7 @@ function addGroups($groupList,[string]$level,[string]$key)
 
 
 # make sure output dir is there
-New-Item -Path $reportFolder -ItemType Directory -Force
+New-Item -Path $reportFolder -ItemType Directory -Force | Out-Null
 
 
 $projects = restCall "${BASEURL}/projects/${NOLIMITS}"
@@ -154,17 +156,23 @@ $final_table = $all_user_perms | foreach {
         displayName=$info.displayName;
         permission=$entry.permission;
         level=$entry.level;
-        objectKey=$entry.objectKey }
+        object=$entry.objectKey }
 }
 
 Write-Progress -Activity $_activity -Completed
 
 
-$reportFile = Join-Path $reportFolder -ChildPath "bitbucket-permissions.csv"
-
+$reportFile = Join-Path $reportFolder -ChildPath "bitbucket-user-permissions.csv"
 $final_table | where {
     $excludeUsers -notcontains $_.userName
-} | sort userName,level,objectKey,permission -Unique |
+} | sort userName,level,object,permission -Unique |
+    Export-Csv -Path $reportFile -Force -NoTypeInformation
+
+
+$reportFile = Join-Path $reportFolder -ChildPath "bitbucket-object-permissions.csv"
+$final_table | where {
+    $excludeUsers -notcontains $_.userName
+} | sort object,level,permission,userName |
     Export-Csv -Path $reportFile -Force -NoTypeInformation
 
 
