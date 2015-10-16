@@ -1,21 +1,23 @@
 ﻿<#
- Script that parses audit log
+ Script that parses Bitbucket/Stash audit logs
  Requires https://github.com/darkoperator/Posh-SSH, see there how to install the latest version
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$True)]
-    [string] $bitbucketHost,
+    [string]       $bitbucketHost,
     [Parameter(Mandatory=$True)]
-    [string] $bitbucketLogDirectory,
+    [string]       $bitbucketLogDirectory,
     [Parameter(Mandatory=$True)]
     [PSCredential] $credential,
     [Parameter(Mandatory=$False)]
-    [ScriptBlock]$filter = {},
+    [ScriptBlock]  $filter = {},
     [Parameter(Mandatory=$False)]
-    [string] $reportFolder = "reports",
+    [datetime]     $referenceDate = (Get-Date).AddDays(-25),
     [Parameter(Mandatory=$False)]
-    [bool] $cleanup = $False
+    [string]       $reportFolder = "reports",
+    [Parameter(Mandatory=$False)]
+    [bool]         $cleanup = $False
 )
 
 $pathToScripts = $PSScriptRoot
@@ -38,8 +40,6 @@ filter convertUnixTimestamp {
 New-Item -Path $reportFolder -ItemType Directory -Force | Out-Null
 $reportFile = Join-Path $reportFolder -ChildPath "bitbucket-audit.csv"
 
-# reference date in previous month
-$referenceDate = (Get-Date).AddDays(-25)
 # make working place
 $workingFolder = Join-Path $env:TEMP -ChildPath "bitbucket-audit-report-$($referenceDate.ToString('MMM-yyyy'))-temp"
 New-Item -Path $workingFolder -ItemType Directory -Force | Out-Null

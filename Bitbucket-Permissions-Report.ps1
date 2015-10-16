@@ -1,18 +1,20 @@
 ﻿<#
- Script that dumps all Stash permissions
+ Script that dumps all Bitbucket/Stash permissions using REST API
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$True)]
     [PSCredential] $credential,
     [Parameter(Mandatory=$False)]
-    $reportFolder = "reports",
+    [datetime]     $referenceDate = (Get-Date).AddDays(-25),
+    [Parameter(Mandatory=$False)]
+    [string]       $reportFolder = "reports",
     [Parameter(Mandatory=$True)]
-    [string] $serverURL,
+    [string]       $serverURL,
     [Parameter(Mandatory=$False)]
-    $excludeUsers = @("admin"),
+    [string[]]     $excludeUsers = @("admin"),
     [Parameter(Mandatory=$False)]
-    [bool] $cleanup = $False
+    [bool]         $cleanup = $False
 ) 
 
 ### define context ###
