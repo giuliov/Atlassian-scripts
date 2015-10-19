@@ -38,7 +38,7 @@ filter convertUnixTimestamp {
 
 # make sure output dir is there
 New-Item -Path $reportFolder -ItemType Directory -Force | Out-Null
-$reportFile = Join-Path $reportFolder -ChildPath "bitbucket-audit.csv"
+$reportFile = Join-Path $reportFolder -ChildPath "bitbucket-audit-$(Get-Date -Format 'yyyyMMdd-HHmm').csv"
 
 # make working place
 $workingFolder = Join-Path $env:TEMP -ChildPath "bitbucket-audit-report-$($referenceDate.ToString('MMM-yyyy'))-temp"

@@ -17,11 +17,16 @@ param(
     [bool]         $cleanup = $False
 ) 
 
+$fileTimestamp = "$(Get-Date -Format 'yyyyMMdd-HHmm')"
+$repositoriesReportFile = "bitbucket-repositories-$fileTimestamp.csv"
+$userPermissionsReportFile = "bitbucket-user-permissions-$fileTimestamp.csv"
+$objectPermissionsReportFile = "bitbucket-object-permissions-$fileTimestamp.csv"
+
 ### define context ###
 $cred_parts = $credential.UserName.Split('\')
 if ($cred_parts.Length -gt 1) {
   # DOMAIN\user
-$stash_user = $credential.UserName.Split('\')[1]
+  $stash_user = $credential.UserName.Split('\')[1]
 } else {
   # application user
   $stash_user = $credential.UserName
@@ -136,7 +141,7 @@ foreach ($project in $projects) {
 Write-Host "Post-processing"
 
 
-$reportFile = Join-Path $reportFolder -ChildPath "bitbucket-repositories.csv"
+$reportFile = Join-Path $reportFolder -ChildPath $repositoriesReportFile
 $all_repositories | foreach{
     New-Object -TypeName PSObject -Property @{ project=$_.project.key; project_long=$_.project.name; repo=$_.name }
 } | Export-Csv -Path $reportFile -Force -NoTypeInformation
@@ -174,14 +179,14 @@ $final_table = $all_user_perms | foreach {
 Write-Progress -Activity $_activity -Completed
 
 
-$reportFile = Join-Path $reportFolder -ChildPath "bitbucket-user-permissions.csv"
+$reportFile = Join-Path $reportFolder -ChildPath $userPermissionsReportFile
 $final_table | where {
     $excludeUsers -notcontains $_.userName
 } | sort userName,level,object,permission -Unique |
     Export-Csv -Path $reportFile -Force -NoTypeInformation
 
 
-$reportFile = Join-Path $reportFolder -ChildPath "bitbucket-object-permissions.csv"
+$reportFile = Join-Path $reportFolder -ChildPath $objectPermissionsReportFile
 $final_table | where {
     $excludeUsers -notcontains $_.userName
 } | sort object,level,permission,userName |
