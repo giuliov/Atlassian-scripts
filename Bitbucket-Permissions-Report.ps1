@@ -18,7 +18,14 @@ param(
 ) 
 
 ### define context ###
+$cred_parts = $credential.UserName.Split('\')
+if ($cred_parts.Length -gt 1) {
+  # DOMAIN\user
 $stash_user = $credential.UserName.Split('\')[1]
+} else {
+  # application user
+  $stash_user = $credential.UserName
+}
 $stash_plain_password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($credential.Password))
 $encodedCreds = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${stash_user}:${stash_plain_password}"))
 $basicAuthValue = "Basic $encodedCreds"
